@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HepMatch: Geriatric Liver Edition 🔥</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tinder: {
+              flame: '#FE3C72',
+              rose: '#FF6036',
+              gold: '#FD5068',
+              accent: '#E0245E'
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow-rose': '0 0 25px rgba(254, 60, 114, 0.45)',
+            'glow-emerald': '0 0 25px rgba(16, 185, 129, 0.45)',
+            'glow-amber': '0 0 25px rgba(245, 158, 11, 0.45)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* Prevenzione selezione testo e rimbalzi su mobile durante il drag */
+    .no-select {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    
+    .card-swipe-container {
+      touch-action: pan-y;
+    }
+
+    .tinder-card {
+      touch-action: none;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /* Animazione fiamma palpitante */
+    @keyframes flame-pulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(254, 60, 114, 0.6)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 16px rgba(255, 96, 54, 0.9)); }
+    }
+    .animate-flame {
+      animation: flame-pulse 2s infinite ease-in-out;
+    }
+
+    /* Barra scroll personalizzata */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(254, 60, 114, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-between font-sans selection:bg-rose-500 selection:text-white no-select overflow-x-hidden relative">
+
+  <!-- Glows ambientali sullo sfondo -->
+  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-96 bg-gradient-to-b from-rose-500/15 via-orange-500/10 to-transparent blur-3xl pointer-events-none -z-10"></div>
+  <div class="fixed bottom-0 right-0 w-80 h-80 bg-emerald-500/10 blur-3xl pointer-events-none -z-10"></div>
+  <div class="fixed bottom-0 left-0 w-80 h-80 bg-rose-500/10 blur-3xl pointer-events-none -z-10"></div>
+
+  <!-- CONTAINER PRINCIPALE (Mobile-first max-w-md) -->
+  <div class="w-full max-w-md min-h-screen flex flex-col justify-between px-4 py-3 sm:py-4 z-10">
+
+    <!-- TOP BAR / HEADER -->
+    <header class="flex flex-col gap-2.5 pt-1">
+      <div class="flex items-center justify-between">
+        
+        <!-- Brand & Logo -->
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-rose-600 via-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-500/30 animate-flame">
+            <span class="text-xl leading-none">🔥</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+                HepMatch
+              </h1>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                Geriatric
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium leading-none">
+              Passaggio d'Anno • <span class="text-amber-400 font-semibold">22 Ottobre</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Utility Buttons (Mute + Info) -->
+        <div class="flex items-center gap-2">
+          <!-- Score Badge -->
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-full text-xs font-semibold text-slate-300 shadow-sm">
+            <span class="text-emerald-400" id="scoreDisplay">0</span>
+            <span class="text-slate-500">/</span>
+            <span id="totalCasesDisplay">10</span>
+            <span class="text-emerald-400 text-xs">💚</span>
+          </div>
+
+          <!-- Mute Toggle -->
+          <button id="muteBtn" class="w-9 h-9 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white transition active:scale-95 shadow-sm" title="Attiva/Disattiva Audio">
+            <i data-lucide="volume-2" class="w-4 h-4" id="muteIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Segmented Progress Bar (Tinder Stories Style) -->
+      <div class="w-full flex gap-1 h-1.5 px-0.5" id="progressSegments">
+        <!-- Generato via JS -->
+      </div>
+    </header>
+
+    <!-- AREA CARD SWIPER (Centro dello schermo) -->
+    <main class="relative flex-1 flex flex-col items-center justify-center my-3 min-h-[460px] sm:min-h-[500px]">
+      
+      <!-- STACK CONTAINER -->
+      <div id="cardStack" class="relative w-full h-[480px] sm:h-[510px] flex items-center justify-center perspective-[1000px]">
+        
+        <!-- CARD SEGNAPOSTO CARICAMENTO / FINE MAZZO (Nascosta all'avvio) -->
+        <div id="stackEmptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/60 rounded-3xl border border-slate-800/80 backdrop-blur-md">
+          <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-3xl mb-4 animate-bounce">
+            🎉
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Giro Visite Concluso!</h3>
+          <p class="text-sm text-slate-400 mb-6 max-w-xs">Tutti i 10 fegati geriatrici sono stati esaminati con rigore accademico.</p>
+          <button id="viewResultsBtn" class="px-6 py-3 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white font-bold text-sm shadow-lg shadow-rose-500/25 active:scale-95 transition">
+            Vedi Verdetto dei Professori 🎓
+          </button>
+        </div>
+
+        <!-- Le card verranno inserite dinamicamente qui da JavaScript (Current Card + Next Card) -->
+
+      </div>
+
+    </main>
+
+    <!-- CONTROLLI INFERIORI (Pulsanti Tinder) -->
+    <footer class="flex flex-col items-center gap-2 pb-2">
+      <!-- Bottoni Principali -->
+      <div class="flex items-center justify-center gap-4 sm:gap-6 w-full">
+        
+        <!-- Bottone SX (Opzione A - Swipe Sinistra) -->
+        <button id="btnOptionA" class="group relative flex flex-col items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-slate-900/90 border-2 border-rose-500/70 text-rose-400 shadow-xl shadow-rose-500/10 hover:border-rose-400 hover:text-rose-300 hover:scale-105 active:scale-95 transition-all duration-200" title="Scegli Opzione A (Swipe a Sinistra)">
+          <i data-lucide="x" class="w-8 h-8 stroke-[2.5] group-hover:scale-110 transition-transform"></i>
+          <span class="absolute -bottom-5 text-[10px] font-bold text-rose-400 uppercase tracking-wider whitespace-nowrap">
+            Opzione A
+          </span>
+        </button>
+
+        <!-- Bottone Centro (Consiglio del Primario / Pausa Caffè) -->
+        <button id="btnHint" class="group relative flex flex-col items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-900/90 border-2 border-amber-400/70 text-amber-300 shadow-xl shadow-amber-400/10 hover:border-amber-300 hover:text-amber-200 hover:scale-105 active:scale-95 transition-all duration-200" title="Consiglio del Primario (Pausa Caffè)">
+          <i data-lucide="lightbulb" class="w-6 h-6 stroke-[2.2] group-hover:rotate-12 transition-transform"></i>
+          <span class="absolute -bottom-5 text-[10px] font-bold text-amber-300 uppercase tracking-wider whitespace-nowrap">
+            Dritta Primario
+          </span>
+        </button>
+
+        <!-- Bottone DX (Opzione B - Swipe Destra) -->
+        <button id="btnOptionB" class="group relative flex flex-col items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-slate-900/90 border-2 border-emerald-500/70 text-emerald-400 shadow-xl shadow-emerald-500/10 hover:border-emerald-400 hover:text-emerald-300 hover:scale-105 active:scale-95 transition-all duration-200" title="Scegli Opzione B (Swipe a Destra)">
+          <i data-lucide="heart" class="w-7 h-7 stroke-[2.5] fill-emerald-500/20 group-hover:scale-110 transition-transform"></i>
+          <span class="absolute -bottom-5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider whitespace-nowrap">
+            Opzione B
+          </span>
+        </button>
+
+      </div>
+
+      <!-- Istruzioni swipe sottili -->
+      <div class="mt-4 flex items-center justify-center gap-3 text-[11px] text-slate-500 font-medium">
+        <span>👈 Trascina a SX per <b>Opz. A</b></span>
+        <span>•</span>
+        <span>Trascina a DX per <b>Opz. B</b> 👉</span>
+      </div>
+    </footer>
+
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODALE: CONSIGLIO DEL PRIMARIO / PAUSA CAFFÈ -->
+  <!-- ========================================== -->
+  <div id="hintModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-200">
+    <div class="w-full max-w-sm bg-slate-900 border border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-amber-500/20 transform scale-95 transition-transform duration-200 flex flex-col gap-4 text-center">
+      
+      <!-- Icona Primario -->
+      <div class="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center mx-auto text-3xl shadow-inner">
+        ☕
+      </div>
+
+      <div>
+        <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30">
+          Pausa Caffè & Spifferata
+        </span>
+        <h3 class="text-lg font-bold text-white mt-1">Il Primario di Reparto Bisbiglia:</h3>
+      </div>
+
+      <!-- Testo Consiglio -->
+      <div class="p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800 text-left">
+        <p id="hintText" class="text-sm text-amber-200/90 leading-relaxed italic">
+          "Attenta ai farmaci assunti di recente..."
+        </p>
+      </div>
+
+      <div class="text-[11px] text-slate-400 italic">
+        "Prendi nota prima che rientri il professore con l'elenco delle domande a trabocchetto."
+      </div>
+
+      <button id="closeHintBtn" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition active:scale-95 shadow-md shadow-amber-500/20">
+        Ho Capito, Torno alla Visita 🩺
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODALE FEEDBACK DOPO LO SWIPE (Match/Ghosted) -->
+  <!-- ========================================== -->
+  <div id="feedbackModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden opacity-0 transition-opacity duration-200">
+    <div id="feedbackContent" class="w-full max-w-md max-h-[90vh] overflow-y-auto bg-slate-900 border rounded-3xl p-5 sm:p-6 shadow-2xl transform scale-95 transition-all duration-200 flex flex-col gap-4">
+      
+      <!-- Header Feedback (Dinamico Match o Ghosted) -->
+      <div id="feedbackHeaderBadge" class="flex flex-col items-center text-center gap-1">
+        <div id="feedbackIconWrapper" class="w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-lg mb-1">
+          💚
+        </div>
+        <h2 id="feedbackTitle" class="text-2xl font-black tracking-tight">
+          IT'S A MATCH! 💚
+        </h2>
+        <p id="feedbackJoke" class="text-xs font-semibold text-slate-300 italic px-2">
+          "Battuta geriatrica divertente..."
+        </p>
+      </div>
+
+      <!-- Spiegazione / Razionale Clinico dell'Errore (se errato) -->
+      <div id="errorExplanationBox" class="p-3.5 bg-rose-950/30 border border-rose-500/30 rounded-2xl hidden">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-rose-300 uppercase tracking-wide mb-1">
+          <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+          <span>Perché la risposta era sbagliata:</span>
+        </div>
+        <p id="errorExplanationText" class="text-xs text-rose-200/90 leading-relaxed">
+          Spiegazione dell'errore...
+        </p>
+      </div>
+
+      <!-- Box Perla da Esame (IL CUORE DIDATTICO) -->
+      <div class="p-4 bg-gradient-to-br from-slate-950 to-slate-900/90 border border-emerald-500/30 rounded-2xl shadow-inner relative overflow-hidden">
+        <div class="absolute -right-6 -bottom-6 text-7xl opacity-5 pointer-events-none">🎓</div>
+        
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-black">
+            ✨
+          </span>
+          <h4 class="text-xs font-black uppercase tracking-wider text-emerald-400">
+            Perla da Esame (Formula per i Professori)
+          </h4>
+        </div>
+        
+        <p id="feedbackPearl" class="text-xs sm:text-[13px] text-slate-200 leading-relaxed font-medium">
+          "Testo formale e ineccepibile della perla da esame..."
+        </p>
+      </div>
+
+      <!-- Bottone Avanti -->
+      <button id="nextCardBtn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-white font-black text-sm shadow-lg shadow-rose-500/25 active:scale-95 transition flex items-center justify-center gap-2">
+        <span>Prossimo Paziente</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- SCHERMATA FINALE / RIEPILOGO & VERDETTO -->
+  <!-- ========================================== -->
+  <div id="resultsScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl hidden opacity-0 transition-opacity duration-300 overflow-y-auto">
+    <div class="w-full max-w-md my-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col gap-5 text-center relative">
+      
+      <!-- Glow trionfale -->
+      <div class="absolute inset-0 bg-gradient-to-b from-rose-500/10 via-amber-500/10 to-transparent rounded-3xl pointer-events-none"></div>
+
+      <!-- Icona Trofeo / Risultato -->
+      <div class="relative mx-auto w-20 h-20 rounded-3xl bg-gradient-to-tr from-rose-500 to-amber-400 p-0.5 shadow-xl shadow-rose-500/30">
+        <div class="w-full h-full bg-slate-900 rounded-[22px] flex items-center justify-center text-4xl">
+          <span id="resultEmoji">👑</span>
+        </div>
+      </div>
+
+      <!-- Punteggio & Titolo Giudizio -->
+      <div>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-bold text-slate-300 mb-2">
+          <span>Punteggio Finale:</span>
+          <span id="finalScoreVal" class="text-rose-400 text-sm font-black">10</span>
+          <span class="text-slate-500">/ 10</span>
+        </div>
+        
+        <h2 id="finalVerdictTitle" class="text-2xl font-black text-white tracking-tight leading-tight">
+          Idonea con Lode: I Professori Piangono di Commozione!
+        </h2>
+        
+        <p id="finalVerdictSubtitle" class="text-xs text-slate-300 mt-2 leading-relaxed">
+          Hai dominato sia i virus che i farmaci. Il 22 ottobre sarà solo una meritata passerella trionfale.
+        </p>
+      </div>
+
+      <!-- Lettera Speciale di In Bocca al Lupo -->
+      <div class="p-4 bg-gradient-to-r from-rose-950/40 via-slate-950 to-amber-950/40 border border-rose-500/30 rounded-2xl text-left">
+        <div class="flex items-center gap-2 mb-1.5">
+          <span class="text-rose-400 text-sm">💌</span>
+          <h4 class="text-xs font-bold text-rose-300 uppercase tracking-wider">
+            Messaggio per il 22 Ottobre
+          </h4>
+        </div>
+        <p class="text-xs text-slate-200 leading-relaxed italic">
+          "Cara Dottoressa, un grandissimo in bocca al lupo per l'esame di passaggio d'anno in Geriatria! La tua competenza clinica, unita alla cura per il paziente fragile, farà brillare la tua presentazione sulle epatiti. Spaccherai tutto!" 🩺✨
+        </p>
+      </div>
+
+      <!-- Accordion Bignami Rapido delle Perle -->
+      <details class="group bg-slate-950/70 border border-slate-800 rounded-2xl text-left overflow-hidden">
+        <summary class="p-3.5 flex items-center justify-between cursor-pointer text-xs font-bold text-slate-300 hover:text-white transition">
+          <span class="flex items-center gap-2">
+            <span>📚</span>
+            <span>Consulta il Bignami Rapido (Tutte le 10 Perle)</span>
+          </span>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform"></i>
+        </summary>
+        <div class="p-3.5 pt-0 border-t border-slate-800/60 max-h-56 overflow-y-auto space-y-3 mt-2" id="pearlsSummaryList">
+          <!-- Popolato via JS -->
+        </div>
+      </details>
+
+      <!-- Bottoni di Azione Finale -->
+      <div class="flex flex-col gap-2.5 pt-1">
+        <button id="restartBtn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 text-white font-black text-sm shadow-xl shadow-rose-500/25 active:scale-95 transition flex items-center justify-center gap-2">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          <span>Ripeti il Giro Visite (Ricomincia)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- SCRIPT APPLICATIVO JAVASCRIPT               -->
+  <!-- ========================================== -->
+  <script>
+    /* ==========================================================================
+       DATABASE DEI 10 CASI CLINICI GERIATRICI
+       Argomento: Epatiti virali e non virali nell'anziano
+       ========================================================================== */
+    const CLINICAL_CASES = [
+      {
+        id: 1,
+        patientName: "Mario",
+        age: 78,
+        genderEmoji: "👴",
+        location: "Reparto Geriatria • Letto 4",
+        vibe: "💊 8 farmaci cronici • 🦷 Recente odontoiatria",
+        bio: "Ittero e astenia comparsi dopo 10 giorni da un'estrazione dentaria complicata. Assume 8 farmaci per comorbilità croniche e recente ciclo antibiotico.",
+        labs: [
+          { label: "ALT", val: "640 UI/L", alert: true },
+          { label: "Fosfatasi Alc.", val: "3x VN", alert: true },
+          { label: "Terapia rec.", val: "Amoxicillina / Clavulanato", alert: false },
+          { label: "Sierologie virali", val: "In corso", alert: false }
+        ],
+        optionA: {
+          label: "Epatite Acuta da HBV",
+          desc: "Infezione virale acuta acquisita accidentalmente"
+        },
+        optionB: {
+          label: "DILI Colestatica/Mista da Amox/Clav",
+          desc: "Danno epatico da farmaco immuno-mediato"
+        },
+        correctOption: "B", // Opzione B (DX)
+        hint: "Fai attenzione alla latenza temporale: l'antibiotico era già finito quando è esploso l'ittero. In geriatria, l'associazione Amoxicillina/Acido Clavulanico è la regina incontrastata dei danni epatici da farmaco!",
+        matchJoke: "Match perfetto! Hai salvato Mario da una biopsia inutile. Il primario annuisce con approvazione accademica.",
+        ghostJoke: "L'epatologo è scappato dalla stanza mormorando 'Ma la cartella farmacologica non la legge mai nessuno?!'",
+        errorExplanation: "L'esordio tipico a diversi giorni di distanza dal termine del ciclo antibiotico, associato a un pattern misto/colestatico, è patognomonico per DILI da amoxicillina/clavulanato, non per HBV acuto.",
+        pearl: "Amoxicillina/clavulanato è la causa #1 di DILI (Drug-Induced Liver Injury) nell'anziano; tipicamente il danno colestatico o misto compare da 1 a 4 settimane DOPO la sospensione del farmaco."
+      },
+      {
+        id: 2,
+        patientName: "Carmela",
+        age: 82,
+        genderEmoji: "👵",
+        location: "Onco-Ematologia Geriatrica",
+        vibe: "🔬 Linfoma non-Hodgkin • 🎯 Candidata a Rituximab",
+        bio: "In procinto di iniziare immunochemioterapia con Rituximab (anti-CD20). Asintomatica, transaminasi perfettamente nella norma. Sierologia pre-trattamento effettuata.",
+        labs: [
+          { label: "HBsAg", val: "Negativo (-)", alert: false },
+          { label: "Anti-HBc IgG", val: "Positivo (+)", alert: true },
+          { label: "Anti-HBs", val: "Negativo (-)", alert: false },
+          { label: "ALT / AST", val: "Normali", alert: false }
+        ],
+        optionA: {
+          label: "Profilassi con Entecavir per alto rischio riattivazione HBV",
+          desc: "Terapia antivirale preventiva prima dell'inizio del Rituximab"
+        },
+        optionB: {
+          label: "Soggetto guarito, nessuna profilassi",
+          desc: "HBsAg è negativo: monitorare solo clinicamente"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "Il Rituximab distrugge i linfociti B e toglie ogni controllo immunitario. Quel piccolo Anti-HBc positivo significa che il virus dell'epatite B è ancora nascosto nei nuclei degli epatociti come cccDNA...",
+        matchJoke: "Complimenti! Hai evitato un'epatite fulminante letale da riattivazione virale. La commissione si alza in piedi!",
+        ghostJoke: "Allarme rosso! Il cccDNA virale ha fatto festa: senza Entecavir Carmela rischiava la riattivazione fatale!",
+        errorExplanation: "HBsAg negativo non significa assenza di virus: in presenza di Anti-HBc isolato o pregresso contatto, i farmaci anti-CD20 (come Rituximab) causano riattivazione nel >10% dei casi.",
+        pearl: "Nei pazienti candidati ad anticorpi anti-CD20 con Anti-HBc positivo (anche se HBsAg negativo), il rischio di riattivazione di HBV è elevatissimo (>10%): la profilassi con Entecavir o Tenofovir è categoricamente mandatoria."
+      },
+      {
+        id: 3,
+        patientName: "Giuseppe",
+        age: 74,
+        genderEmoji: "👴",
+        location: "Ambulatorio Fragilità Metabolica",
+        vibe: "🍰 Diabete Mellito Tipo 2 • ⚖️ BMI 31 • 🍷 Astemio",
+        bio: "Diabete di lunga data con modesto controllo glicemico. Riferisce nessun consumo di alcol. Agli esami di routine transaminasi lievemente aumentate con AST/ALT < 1.",
+        labs: [
+          { label: "FibroScan", val: "8.8 kPa (Rigidità elevata)", alert: true },
+          { label: "AST / ALT", val: "38 / 52 UI/L (Rapporto < 1)", alert: true },
+          { label: "Marker virali", val: "Tutti Negativi", alert: false },
+          { label: "Alcol", val: "0 g/die", alert: false }
+        ],
+        optionA: {
+          label: "MASLD / MASH con fibrosi epatica significativa",
+          desc: "Steatopatia metabolica evolutiva con fibrosi F2-F3"
+        },
+        optionB: {
+          label: "Epatite Autoimmune tipo 1",
+          desc: "Processo autoimmune primitivo cronico attivo"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "Sovrappeso, diabete, transaminasi appena mosse ma un FibroScan a 8.8 kPa: la malattia metabolica del fegato nell'anziano lavora in silenzio fino a quando la fibrosi non è avanzata!",
+        matchJoke: "Diagnosi impeccabile! Nessuna biopsia inutile, dritto allo score FIB-4 e al controllo cardiometabolico.",
+        ghostJoke: "L'epatite autoimmune non c'entra: qui c'è la firma del dismetabolismo e della resistenza insulinica!",
+        errorExplanation: "Nel paziente diabetico anziano la MASLD (ex NAFLD/NASH) è la principale epatopatia cronica. Il valore di FibroScan a 8.8 kPa indica fibrosi significativa (≥F2), non una forma autoimmune.",
+        pearl: "La MASLD (Metabolic dysfunction-Associated Steatotic Liver Disease) è la causa non virale più diffusa. Nell'anziano diabetico il FIB-4 score e l'elastometria epatica (FibroScan) sono fondamentali per intercettare la fibrosi avanzata clinicamente silente."
+      },
+      {
+        id: 4,
+        patientName: "Rosa",
+        age: 79,
+        genderEmoji: "👵",
+        location: "Reparto Acuti • Isolamento Delirium",
+        vibe: "🧠 Delirium ipocinetico • 🧴 Prurito cronico sine materia",
+        bio: "Ricoverata per insorgenza subacuta di stato confusionale ipocinetico. Storia di prurito incoercibile negli ultimi mesi attribuito a xerosi cutanea senile.",
+        labs: [
+          { label: "ANA", val: "1:320 (Omogeneo)", alert: true },
+          { label: "IgG Totali", val: "2200 mg/dl (Marcate)", alert: true },
+          { label: "AMA", val: "Negativi (-)", alert: false },
+          { label: "Bilirubina", val: "Normale (Anitterica)", alert: false }
+        ],
+        optionA: {
+          label: "Epatite Autoimmune a esordio tardivo",
+          desc: "AIH tipo 1 senile con encefalopatia epatica subclinica"
+        },
+        optionB: {
+          label: "Colangite Biliare Primitiva",
+          desc: "CBP classica colestatica dell'anziana"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "Gli AMA negativi tagliano le gambe alla Colangite Biliare Primitiva. E quelle IgG a 2200 con ANA 1:320 sono la firma classica dell'autoimmunità epatica che nell'anziano si traveste da decadimento cognitivo o delirium!",
+        matchJoke: "Che occhio clinico! Hai beccato l'esordio atipico dell'autoimmune geriatrica. Il professore segna un 30 e lode a matita.",
+        ghostJoke: "Attenta agli AMA negativi e all'ipergammaglobulinemia IgG policlonale: la diagnosi corretta era autoimmune!",
+        errorExplanation: "L'Epatite Autoimmune (AIH) ha un secondo picco d'incidenza tra i 65 e gli 80 anni; a differenza del giovane, nell'anziano può esordire in modo insidioso con delirium/encefalopatia e iper-IgG marcate.",
+        pearl: "L'Epatite Autoimmune presenta un secondo picco epidemiologico nell'anziano e frequentemente debutta in modo atipico con delirium o astenia per encefalopatia subclinica anziché con il classico ittero franco."
+      },
+      {
+        id: 5,
+        patientName: "Antonio",
+        age: 85,
+        genderEmoji: "👴",
+        location: "Pronto Soccorso Geriatrico",
+        vibe: "🐗 Grigliata campestre • 🥩 Carni poco cotte",
+        bio: "Febbre, profonda astenia e marcata nausea insorte 4 settimane dopo aver partecipato alla sagra del cinghiale dove ha consumato salsicce di maiale e cacciagione al sangue.",
+        labs: [
+          { label: "ALT", val: "> 1800 UI/L", alert: true },
+          { label: "AST", val: "1450 UI/L", alert: true },
+          { label: "Bilirubina tot.", val: "6.2 mg/dl", alert: true },
+          { label: "Anti-HAV IgM", val: "Negativo (-)", alert: false }
+        ],
+        optionA: {
+          label: "Epatite da CMV",
+          desc: "Infezione opportunistica da Citomegalovirus"
+        },
+        optionB: {
+          label: "Epatite E (HEV) Acuta",
+          desc: "Infezione zoonotica da genotipo 3 alimentare"
+        },
+        correctOption: "B", // Opzione B (DX)
+        hint: "Cinghiale e maiale poco cotti sono il veicolo classico per un virus epatotropo a trasmissione zoonotica che in Europa fa strage di transaminasi negli over 70...",
+        matchJoke: "Cinghiale scovato! Hai riconosciuto la causa infettiva emergente più insidiosa delle tavole nostrane.",
+        ghostJoke: "Non è CMV! Pensa al maiale e al cinghiale poco cotti: la risposta giusta era Epatite E!",
+        errorExplanation: "L'Epatite E (genotipo 3 autocono europeo) è una zoonosi trasmessa tramite carni suine e di selvaggina crude o poco cotte. Negli anziani maschi causa frequentemente epatite itterica acuta severa.",
+        pearl: "L'Epatite E (HEV) da genotipo 3, contratta per consumo di carni suine o selvaggina non adeguatamente cotte, rappresenta l'epatite acuta virale più frequentemente sottodiagnosticata nell'anziano in Europa."
+      },
+      {
+        id: 6,
+        patientName: "Teresa",
+        age: 72,
+        genderEmoji: "👵",
+        location: "Day Hospital Geriatrico",
+        vibe: "🩸 Porpora palpabile • ❄️ Crioglobuline sieriche",
+        bio: "Giunge per comparsa di lesioni porpuriche declivi agli arti inferiori, astenia invalidante e artralgie. La biopsia cutanea documenta vasculite leucocitoclastica.",
+        labs: [
+          { label: "Anti-HCV", val: "Positivo (+)", alert: true },
+          { label: "HCV-RNA", val: "1.200.000 UI/ml", alert: true },
+          { label: "Crioglobuline", val: "Presenti (Tipo II)", alert: true },
+          { label: "Genotipo", val: "1b", alert: false }
+        ],
+        optionA: {
+          label: "Terapia con DAA pangenotipici orali",
+          desc: "Trattamento curativo diretto antivirale per 8-12 settimane"
+        },
+        optionB: {
+          label: "Non trattabile per senescenza",
+          desc: "Solo terapia steroidea sintomatica data l'età avanzata"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "Siamo nell'era dei DAA (antivirali ad azione diretta)! L'interferone e le sue tossicità appartengono al secolo scorso. Negare la cura per l'età è puro ageismo terapeutico...",
+        matchJoke: "Grandiosa! Terapia avviata: eradicazione virologica >95% e risoluzione della crioglobulinemia senza effetti collaterali.",
+        ghostJoke: "No all'ageismo clinico! I DAA sono sicurissimi anche a 90 anni e curano la crioglobulinemia alla radice!",
+        errorExplanation: "L'età anagrafica non costituisce più alcuna controindicazione al trattamento dell'epatite C: i DAA hanno eccellente tollerabilità e tassi di SVR (guarigione) superiori al 95% anche nei grandi anziani.",
+        pearl: "Nell'era dei DAA (Direct-Acting Antivirals), l'età avanzata non è assolutamente una controindicazione: offrono una risposta virologica sostenuta >95% con un profilo di tollerabilità eccellente rispetto all'interferone del passato."
+      },
+      {
+        id: 7,
+        patientName: "Luigi",
+        age: 80,
+        genderEmoji: "👴",
+        location: "Pronto Soccorso • Terapia Sub-Intensiva",
+        vibe: "🦴 Lombalgia cronica • 🤧 Raffreddore curato 'fai-da-te'",
+        bio: "Ricoverato per sonnolenza e ittero. Per una forte lombalgia ha assunto Paracetamolo 1g quattro volte al giorno, a cui ha aggiunto bustine per i sintomi influenzali anch'esse contenenti paracetamolo.",
+        labs: [
+          { label: "ALT", val: "> 5500 UI/L", alert: true },
+          { label: "AST", val: "> 4800 UI/L", alert: true },
+          { label: "INR", val: "2.8 (Coagulopatia acuta)", alert: true },
+          { label: "Pressione art.", val: "125/75 mmHg (Emodinamicamente stabile)", alert: false }
+        ],
+        optionA: {
+          label: "Epatotossicità da Paracetamolo da sovradosaggio involontario",
+          desc: "Necrosi epatica centrolobulare da deplezione di glutatione"
+        },
+        optionB: {
+          label: "Epatite Ischemica da shock",
+          desc: "Fegato da ipoperfusione sistemica transitoria"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "Paziente emodinamicamente stabile (niente ipotensione da shock), ma la somma di compresse e bustine influenzali ha superato allegramente i 5-6 grammi al giorno. Nell'anziano fragile le scorte di glutatione si esauriscono in un soffio!",
+        matchJoke: "Immediata N-acetilcisteina endovena! Hai salvato Luigi da un'insufficienza epatica acuta da polifarmacia inconsapevole.",
+        ghostJoke: "I parametri pressori erano stabili, niente shock! La causa era la fatale combinazione di Paracetamolo + bustine influenzali!",
+        errorExplanation: "La combinazione di compresse e preparati da banco per il raffreddore genera sovradosaggio involontario cumulativo. Nel geriatrico la ridotta riserva di glutatione innesca necrosi massiva a dosaggi anche di poco superiori a 4g/die.",
+        pearl: "Nell'anziano fragile e malnutrito, la deplezione fisiologica di glutatione favorisce l'epatotossicità grave da paracetamolo anche per sovradosaggi cumulativi modesti dovuti a polifarmacia involontaria da farmaci da banco."
+      },
+      {
+        id: 8,
+        patientName: "Francesca",
+        age: 76,
+        genderEmoji: "👵",
+        location: "Epatologia Territoriale",
+        vibe: "🔬 Margini epatici irregolari • 🧬 Sierologia ambigua",
+        bio: "All'ecografia addominale si riscontra fegato disomogeneo a margini finemente bozzoluti con modesta splenomegalia. Riferisce benessere soggettivo.",
+        labs: [
+          { label: "HBsAg", val: "Positivo (+)", alert: true },
+          { label: "HBeAg", val: "Negativo (-)", alert: false },
+          { label: "Anti-HBe", val: "Positivo (+)", alert: false },
+          { label: "HBV-DNA", val: "18.000 UI/ml (Elevato)", alert: true }
+        ],
+        optionA: {
+          label: "Portatore inattivo (non trattare)",
+          desc: "HBeAg negativo con anticorpi Anti-HBe presenti: solo follow-up"
+        },
+        optionB: {
+          label: "Epatite Cronica B HBeAg-negativa (mutante pre-core)",
+          desc: "Infezione attiva con rischio cirrogeno: indicata terapia con NUC"
+        },
+        correctOption: "B", // Opzione B (DX)
+        hint: "Non lasciarti ingannare dall'HBeAg negativo! Guarda la carica virale (18.000 UI/ml) e i margini bozzoluti del fegato: in area mediterranea il virus ha mutato la regione pre-core e picchia duro!",
+        matchJoke: "Bravissima! Riconoscere il mutante pre-core nell'anziano mediterraneo è la classica domanda da lode accademica.",
+        ghostJoke: "Trappola classica! Un HBV-DNA di 18.000 UI/ml con fegato bozzoluto NON è mai un portatore inattivo!",
+        errorExplanation: "Il portatore inattivo ha HBV-DNA < 2.000 UI/ml e fegato normale. In questo caso l'HBeAg è negativo per una mutazione pre-core/core promoter, ma il virus replica attivamente e genera fibrosi.",
+        pearl: "Il fenotipo HBeAg-negativo con elevata carica virale (mutante pre-core/core promoter) è tipico dell'anziano dell'area mediterranea; richiede terapia con analoghi nucleos(t)idici per prevenire la progressione verso la cirrosi epatica scompensata e l'epatocarcinoma."
+      },
+      {
+        id: 9,
+        patientName: "Corrado",
+        age: 83,
+        genderEmoji: "👴",
+        location: "Ortogeriatria • Post-Operatorio",
+        vibe: "🦴 3° giorno post-frattura femore • 🍷 Abitudini taciute",
+        bio: "In terza giornata post-operatoria per osteosintesi di femore compaiono ittero sclerale, febbricola a 38°C, agitazione psico-motoria notturna e lieve leucocitosi.",
+        labs: [
+          { label: "AST", val: "240 UI/L", alert: true },
+          { label: "ALT", val: "95 UI/L", alert: true },
+          { label: "Rapporto AST/ALT", val: "> 2.5 (De Ritis)", alert: true },
+          { label: "Ecografia vie biliari", val: "Alitiasica, calibro regolare", alert: false }
+        ],
+        optionA: {
+          label: "Epatite Alcolica Acuta",
+          desc: "Slatentizzata dal ricovero con sindrome da astinenza associata"
+        },
+        optionB: {
+          label: "Colecistite Alitiasica",
+          desc: "Complicanza infettiva chirurgica post-operatoria"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "AST più del doppio di ALT con transaminasi totali sotto i 400 UI/L: questo rapporto è la firma indelebile dell'alcol, e il ricovero forzato spesso smaschera l'astinenza con delirium!",
+        matchJoke: "Centro! Hai smascherato l'anamnesi taciuta dal nonno. Terapia di supporto e valutazione Maddox/MDF subito impostate.",
+        ghostJoke: "Non era la cistifellea! Il rapporto de Ritis (AST/ALT > 2) con agitazione da astinenza urlava epatopatia alcolica!",
+        errorExplanation: "Il rapporto AST/ALT > 2 con transaminasi modestamente elevate (<300-500) è altamente specifico per epatopatia alcolica. L'ospedalizzazione forzata interrompe l'abitudine alcolica slatentizzando epatite e delirium tremens.",
+        pearl: "Un rapporto di de Ritis (AST/ALT) > 2 in presenza di transaminasi moderate (<500 UI/L) è fortemente indicativo di epatite alcolica; nell'anziano il ricovero forzato spesso slatentizza anche sindromi da astinenza o delirium da privazione."
+      },
+      {
+        id: 10,
+        patientName: "Graziella",
+        age: 77,
+        genderEmoji: "👵",
+        location: "Cardiogeriatria / UTIC",
+        vibe: "🫀 Scompenso Cardiaco Destro • 🌊 Turgore giugulare",
+        bio: "Presenta edemi declivi imponenti fino alle cosce, epatomegalia dolente ma a margini lisci e turgore delle vene giugulari a 45°. Lieve rialzo degli indici di colestasi e transaminasi.",
+        labs: [
+          { label: "Fegato eco", val: "Ingrandito, vene sovraepatiche ectasiche", alert: true },
+          { label: "Reflusso epato-giugulare", val: "Positivo marcato", alert: true },
+          { label: "Bilirubina tot.", val: "2.4 mg/dl (Prevalenza diretta)", alert: true },
+          { label: "ALT / AST", val: "Lievemente mosse (x 1.5 VN)", alert: false }
+        ],
+        optionA: {
+          label: "Epatopatia congestizia ('Fegato a noce moscata')",
+          desc: "Stasi retrograda da insufficienza cardiaca destra"
+        },
+        optionB: {
+          label: "Epatite virale fulminante sovrapposta",
+          desc: "Insufficienza epatica acuta primitiva virale"
+        },
+        correctOption: "A", // Opzione A (SX)
+        hint: "Vene giugulari a corda, vene sovraepatiche dilatate come fiumi in piena e fegato liscio e dolente: la pompa cardiaca destra non scarica e il fegato soffre per congestione passiva!",
+        matchJoke: "Bravissima! Più diuretici d'ansa e meno antivirali. Il cardiologo e l'epatologo firmano insieme il referto.",
+        ghostJoke: "Niente virus fulminante: le transaminasi sarebbero a migliaia! Questo è un classico fegato congestizio da scompenso cardiaco.",
+        errorExplanation: "L'epatopatia da stasi ('nutmeg liver') è conseguenza dell'aumento della pressione venosa centrale da scompenso destro. La dilatazione delle sovraepatiche all'eco e il turgore giugulare confermano l'eziologia cardiogena.",
+        pearl: "La stasi venosa epatica da insufficienza cardiaca destra ('fegato a noce moscata') causa epatomegalia dolente e colestasi; la risoluzione clinica dipende dall'ottimizzazione del carico emodinamico e dei diuretici, non da terapie epatotrope."
+      }
+    ];
+
+    /* ==========================================================================
+       MODULO WEB AUDIO API (SINTETIZZATORE NATIVO ZERO-DIPENDENZE)
+       ========================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+      }
+
+      initCtx() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            this.ctx = new AudioContextClass();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        return this.isMuted;
+      }
+
+      // Suono Trionfale Corretto (Accordo arpeggiato maggiore e brillante)
+      playCorrect() {
+        if (this.isMuted) return;
+        this.initCtx();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        // Note: Do5, Mi5, Sol5, Do6
+        const frequencies = [523.25, 659.25, 783.99, 1046.50];
+
+        frequencies.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+
+          gain.gain.setValueAtTime(0, now + idx * 0.07);
+          gain.gain.linearRampToValueAtTime(0.22, now + idx * 0.07 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now + idx * 0.07);
+          osc.stop(now + idx * 0.07 + 0.36);
+        });
+      }
+
+      // Suono Tonfo Sordo per Errore ("Ghosted Thud")
+      playWrong() {
+        if (this.isMuted) return;
+        this.initCtx();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        
+        // Oscillatore discendente basso
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(190, now);
+        osc.frequency.exponentialRampToValueAtTime(55, now + 0.28);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(450, now);
+        filter.frequency.exponentialRampToValueAtTime(80, now + 0.28);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.32);
+      }
+
+      // Fanfara finale per punteggio pieno / vittoria
+      playFanfare() {
+        if (this.isMuted) return;
+        this.initCtx();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const notes = [
+          { f: 523.25, d: 0.1, t: 0.0 },  // C5
+          { f: 659.25, d: 0.1, t: 0.12 }, // E5
+          { f: 783.99, d: 0.1, t: 0.24 }, // G5
+          { f: 1046.50, d: 0.35, t: 0.36 }, // C6
+          { f: 880.00, d: 0.12, t: 0.65 }, // A5
+          { f: 1046.50, d: 0.45, t: 0.80 } // C6
+        ];
+
+        notes.forEach(note => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(note.f, now + note.t);
+
+          gain.gain.setValueAtTime(0, now + note.t);
+          gain.gain.linearRampToValueAtTime(0.2, now + note.t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + note.t + note.d);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now + note.t);
+          osc.stop(now + note.t + note.d + 0.05);
+        });
+      }
+
+      // Piccolo pop leggero al tocco
+      playTap() {
+        if (this.isMuted) return;
+        this.initCtx();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+    }
+
+    /* ==========================================================================
+       GESTORE APPLICATIVO PRINCIPALE (HepMatch Game Engine)
+       ========================================================================== */
+    class HepMatchApp {
+      constructor() {
+        this.sound = new SoundEngine();
+        this.cases = CLINICAL_CASES;
+        this.currentIndex = 0;
+        this.score = 0;
+        this.answers = []; // Log delle risposte { id, chosen, isCorrect }
+        
+        // Riferimenti DOM principali
+        this.cardStack = document.getElementById('cardStack');
+        this.emptyState = document.getElementById('stackEmptyState');
+        this.scoreDisplay = document.getElementById('scoreDisplay');
+        this.totalCasesDisplay = document.getElementById('totalCasesDisplay');
+        this.progressSegments = document.getElementById('progressSegments');
+        
+        // Modali
+        this.feedbackModal = document.getElementById('feedbackModal');
+        this.feedbackContent = document.getElementById('feedbackContent');
+        this.hintModal = document.getElementById('hintModal');
+        this.resultsScreen = document.getElementById('resultsScreen');
+
+        // Bottoni
+        this.btnOptionA = document.getElementById('btnOptionA');
+        this.btnOptionB = document.getElementById('btnOptionB');
+        this.btnHint = document.getElementById('btnHint');
+        this.muteBtn = document.getElementById('muteBtn');
+        this.muteIcon = document.getElementById('muteIcon');
+        this.nextCardBtn = document.getElementById('nextCardBtn');
+        this.closeHintBtn = document.getElementById('closeHintBtn');
+        this.restartBtn = document.getElementById('restartBtn');
+        this.viewResultsBtn = document.getElementById('viewResultsBtn');
+
+        // Stato drag
+        this.isDragging = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.currentX = 0;
+        this.currentY = 0;
+        this.activeCardEl = null;
+        this.badgeNopeEl = null;
+        this.badgeLikeEl = null;
+
+        this.init();
+      }
+
+      init() {
+        this.totalCasesDisplay.textContent = this.cases.length;
+        this.setupProgressSegments();
+        this.bindEvents();
+        this.renderStack();
+      }
+
+      setupProgressSegments() {
+        this.progressSegments.innerHTML = '';
+        this.cases.forEach((_, idx) => {
+          const seg = document.createElement('div');
+          seg.id = `prog-seg-${idx}`;
+          seg.className = 'flex-1 bg-slate-800 rounded-full transition-colors duration-300';
+          this.progressSegments.appendChild(seg);
+        });
+      }
+
+      updateProgressSegment(index, isCorrect) {
+        const seg = document.getElementById(`prog-seg-${index}`);
+        if (seg) {
+          if (isCorrect) {
+            seg.className = 'flex-1 bg-emerald-500 rounded-full shadow-sm shadow-emerald-500/50';
+          } else {
+            seg.className = 'flex-1 bg-rose-500 rounded-full shadow-sm shadow-rose-500/50';
+          }
+        }
+      }
+
+      bindEvents() {
+        // Tasto Mute
+        this.muteBtn.addEventListener('click', () => {
+          const muted = this.sound.toggleMute();
+          if (muted) {
+            this.muteIcon.setAttribute('data-lucide', 'volume-x');
+            this.muteBtn.classList.add('text-rose-400');
+          } else {
+            this.muteIcon.setAttribute('data-lucide', 'volume-2');
+            this.muteBtn.classList.remove('text-rose-400');
+            this.sound.playTap();
+          }
+          lucide.createIcons();
+        });
+
+        // Bottoni Fisici sotto la card
+        this.btnOptionA.addEventListener('click', () => this.handleAction('A'));
+        this.btnOptionB.addEventListener('click', () => this.handleAction('B'));
+        this.btnHint.addEventListener('click', () => this.openHintModal());
+
+        // Modale Feedback
+        this.nextCardBtn.addEventListener('click', () => this.closeFeedbackAndAdvance());
+        
+        // Modale Consiglio
+        this.closeHintBtn.addEventListener('click', () => this.closeHintModal());
+        this.hintModal.addEventListener('click', (e) => {
+          if (e.target === this.hintModal) this.closeHintModal();
+        });
+
+        // Schermata finale
+        this.restartBtn.addEventListener('click', () => this.restartGame());
+        this.viewResultsBtn.addEventListener('click', () => this.showResultsScreen());
+
+        // Tasti di scelta rapida da tastiera (Frecce SX/DX, Spazio per hint/next)
+        window.addEventListener('keydown', (e) => {
+          if (!this.feedbackModal.classList.contains('hidden')) {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
+              e.preventDefault();
+              this.closeFeedbackAndAdvance();
+            }
+            return;
+          }
+
+          if (!this.hintModal.classList.contains('hidden')) {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              this.closeHintModal();
+            }
+            return;
+          }
+
+          if (!this.resultsScreen.classList.contains('hidden')) return;
+
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            this.handleAction('A');
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            this.handleAction('B');
+          } else if (e.key === 'h' || e.key === 'H' || e.key === '?') {
+            e.preventDefault();
+            this.openHintModal();
+          }
+        });
+      }
+
+      /* ========================================================================
+         RENDERING DELLO STACK DELLE CARD
+         ======================================================================== */
+      renderStack() {
+        // Rimuove eventuali vecchie card
+        const existingCards = this.cardStack.querySelectorAll('.tinder-card');
+        existingCards.forEach(c => c.remove());
+
+        if (this.currentIndex >= this.cases.length) {
+          // Mazzo terminato
+          this.emptyState.classList.remove('hidden');
+          this.btnOptionA.disabled = true;
+          this.btnOptionB.disabled = true;
+          this.btnHint.disabled = true;
+          this.btnOptionA.classList.add('opacity-40');
+          this.btnOptionB.classList.add('opacity-40');
+          this.btnHint.classList.add('opacity-40');
+          this.showResultsScreen();
+          return;
+        }
+
+        this.emptyState.classList.add('hidden');
+        this.btnOptionA.disabled = false;
+        this.btnOptionB.disabled = false;
+        this.btnHint.disabled = false;
+        this.btnOptionA.classList.remove('opacity-40');
+        this.btnOptionB.classList.remove('opacity-40');
+        this.btnHint.classList.remove('opacity-40');
+
+        // Card successiva (sotto, leggermente scalata per profondità)
+        const nextIndex = this.currentIndex + 1;
+        if (nextIndex < this.cases.length) {
+          const nextCardEl = this.createCardElement(this.cases[nextIndex], false);
+          nextCardEl.style.transform = 'scale(0.94) translateY(16px)';
+          nextCardEl.style.opacity = '0.6';
+          nextCardEl.style.zIndex = '1';
+          this.cardStack.appendChild(nextCardEl);
+        }
+
+        // Card corrente in primo piano
+        const currentCase = this.cases[this.currentIndex];
+        const currentCardEl = this.createCardElement(currentCase, true);
+        currentCardEl.style.zIndex = '10';
+        this.cardStack.appendChild(currentCardEl);
+
+        this.activeCardEl = currentCardEl;
+        this.badgeNopeEl = currentCardEl.querySelector('.badge-nope');
+        this.badgeLikeEl = currentCardEl.querySelector('.badge-like');
+
+        // Aggancia i gestori di drag
+        this.attachDragEvents(currentCardEl);
+
+        // Aggiorna icone Lucide create dinamicamente
+        lucide.createIcons();
+      }
+
+      createCardElement(caseData, isCurrent) {
+        const card = document.createElement('div');
+        card.className = 'tinder-card absolute inset-0 w-full h-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-4 sm:p-5 flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing select-none';
+        card.setAttribute('data-id', caseData.id);
+
+        card.innerHTML = `
+          <!-- Sfondo radiale sottile -->
+          <div class="absolute inset-0 bg-gradient-to-b from-slate-800/40 via-transparent to-slate-950/80 pointer-events-none -z-10"></div>
+
+          <!-- BADGE NOPE (Opzione A / Sinistra) -->
+          <div class="badge-nope opacity-0 absolute top-5 right-5 z-30 pointer-events-none transform rotate-12 border-4 border-rose-500 bg-rose-950/90 text-rose-300 font-black text-sm sm:text-base uppercase tracking-widest px-3 py-1 rounded-xl shadow-glow-rose flex items-center gap-1.5 transition-opacity duration-75">
+            <i data-lucide="x" class="w-5 h-5 stroke-[3]"></i>
+            <span>OPZIONE A</span>
+          </div>
+
+          <!-- BADGE LIKE (Opzione B / Destra) -->
+          <div class="badge-like opacity-0 absolute top-5 left-5 z-30 pointer-events-none transform -rotate-12 border-4 border-emerald-500 bg-emerald-950/90 text-emerald-300 font-black text-sm sm:text-base uppercase tracking-widest px-3 py-1 rounded-xl shadow-glow-emerald flex items-center gap-1.5 transition-opacity duration-75">
+            <i data-lucide="heart" class="w-5 h-5 fill-emerald-500 stroke-[3]"></i>
+            <span>OPZIONE B</span>
+          </div>
+
+          <!-- HEADER CARD: Paziente & Dati Anagrafici -->
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-2xl">${caseData.genderEmoji}</span>
+                  <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">${caseData.patientName}, <span class="text-slate-300 font-normal">${caseData.age}</span></h2>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-rose-400 font-medium mt-0.5">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                  <span>${caseData.location}</span>
+                </div>
+              </div>
+
+              <!-- Badge Numero Paziente -->
+              <span class="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700/80 text-[11px] font-bold text-slate-300">
+                #${caseData.id} di 10
+              </span>
+            </div>
+
+            <!-- Vibe Tags -->
+            <div class="mt-2.5 inline-block text-[11px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full">
+              ${caseData.vibe}
+            </div>
+          </div>
+
+          <!-- BODY CARD: Sintesi Clinica & Esami -->
+          <div class="my-auto py-1">
+            <!-- Bio Clinica -->
+            <p class="text-xs sm:text-[13px] text-slate-300 leading-relaxed font-normal bg-slate-950/50 p-2.5 rounded-2xl border border-slate-800/80">
+              ${caseData.bio}
+            </p>
+
+            <!-- Griglia Valori di Laboratorio -->
+            <div class="grid grid-cols-2 gap-1.5 mt-2">
+              ${caseData.labs.map(lab => `
+                <div class="p-1.5 rounded-xl ${lab.alert ? 'bg-rose-950/40 border border-rose-500/30 text-rose-200' : 'bg-slate-800/50 border border-slate-700/60 text-slate-300'}">
+                  <div class="text-[9px] uppercase font-bold text-slate-400">${lab.label}</div>
+                  <div class="text-xs font-bold truncate">${lab.val}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- BIVIO DIAGNOSTICO: SCELTA A VS SCELTA B -->
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+            
+            <!-- Box Opzione A (Swipe SX) -->
+            <div class="p-2 sm:p-2.5 rounded-2xl bg-rose-950/20 border border-rose-500/40 text-left flex flex-col justify-between transition-all group">
+              <div>
+                <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-rose-400 mb-0.5">
+                  <span>👈 Opz. A</span>
+                  <span class="text-[9px] text-slate-400 font-normal">Swipe SX</span>
+                </div>
+                <div class="text-xs font-bold text-slate-100 leading-snug line-clamp-2">
+                  ${caseData.optionA.label}
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-1 line-clamp-2">
+                ${caseData.optionA.desc}
+              </div>
+            </div>
+
+            <!-- Box Opzione B (Swipe DX) -->
+            <div class="p-2 sm:p-2.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/40 text-left flex flex-col justify-between transition-all group">
+              <div>
+                <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-emerald-400 mb-0.5">
+                  <span>Opz. B 👉</span>
+                  <span class="text-[9px] text-slate-400 font-normal">Swipe DX</span>
+                </div>
+                <div class="text-xs font-bold text-slate-100 leading-snug line-clamp-2">
+                  ${caseData.optionB.label}
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-1 line-clamp-2">
+                ${caseData.optionB.desc}
+              </div>
+            </div>
+
+          </div>
+        `;
+
+        return card;
+      }
+
+      /* ========================================================================
+         GESTIONE DRAG E TOUCH SWIPING
+         ======================================================================== */
+      attachDragEvents(cardEl) {
+        const onStart = (clientX, clientY) => {
+          this.isDragging = true;
+          this.startX = clientX;
+          this.startY = clientY;
+          this.currentX = 0;
+          this.currentY = 0;
+          cardEl.style.transition = 'none';
+          this.sound.initCtx();
+        };
+
+        const onMove = (clientX, clientY) => {
+          if (!this.isDragging) return;
+          this.currentX = clientX - this.startX;
+          this.currentY = clientY - this.startY;
+
+          // Rotazione e traslazione fluide
+          const rotate = this.currentX * 0.07;
+          cardEl.style.transform = `translate(${this.currentX}px, ${this.currentY * 0.3}px) rotate(${rotate}deg)`;
+
+          // Gestione opacità badge NOPE / LIKE
+          const thresholdBadge = 40;
+          if (this.currentX < -thresholdBadge) {
+            // Drag a sinistra -> Opzione A
+            const opacity = Math.min((Math.abs(this.currentX) - thresholdBadge) / 60, 1);
+            if (this.badgeNopeEl) this.badgeNopeEl.style.opacity = opacity;
+            if (this.badgeLikeEl) this.badgeLikeEl.style.opacity = 0;
+          } else if (this.currentX > thresholdBadge) {
+            // Drag a destra -> Opzione B
+            const opacity = Math.min((this.currentX - thresholdBadge) / 60, 1);
+            if (this.badgeLikeEl) this.badgeLikeEl.style.opacity = opacity;
+            if (this.badgeNopeEl) this.badgeNopeEl.style.opacity = 0;
+          } else {
+            if (this.badgeNopeEl) this.badgeNopeEl.style.opacity = 0;
+            if (this.badgeLikeEl) this.badgeLikeEl.style.opacity = 0;
+          }
+        };
+
+        const onEnd = () => {
+          if (!this.isDragging) return;
+          this.isDragging = false;
+
+          const swipeThreshold = 85;
+
+          if (this.currentX < -swipeThreshold) {
+            // Swipe Sinistra -> Opzione A
+            this.animateFlyOut(cardEl, 'left', () => this.evaluateAnswer('A'));
+          } else if (this.currentX > swipeThreshold) {
+            // Swipe Destra -> Opzione B
+            this.animateFlyOut(cardEl, 'right', () => this.evaluateAnswer('B'));
+          } else {
+            // Rilascio prima della soglia: rimbalzo al centro
+            cardEl.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            cardEl.style.transform = 'translate(0px, 0px) rotate(0deg)';
+            if (this.badgeNopeEl) this.badgeNopeEl.style.opacity = 0;
+            if (this.badgeLikeEl) this.badgeLikeEl.style.opacity = 0;
+          }
+        };
+
+        // Eventi Touch
+        cardEl.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            onStart(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+          if (this.isDragging && e.touches.length === 1) {
+            onMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+          if (this.isDragging) onEnd();
+        });
+
+        // Eventi Mouse
+        cardEl.addEventListener('mousedown', (e) => {
+          if (e.button === 0) { // Tasto sinistro
+            onStart(e.clientX, e.clientY);
+          }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (this.isDragging) {
+            onMove(e.clientX, e.clientY);
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (this.isDragging) onEnd();
+        });
+      }
+
+      // Animazione di uscita della card
+      animateFlyOut(cardEl, direction, callback) {
+        cardEl.style.transition = 'transform 0.35s ease-in, opacity 0.35s ease-in';
+        const flyX = direction === 'left' ? -window.innerWidth - 100 : window.innerWidth + 100;
+        const rotate = direction === 'left' ? -35 : 35;
+        cardEl.style.transform = `translate(${flyX}px, 40px) rotate(${rotate}deg)`;
+        cardEl.style.opacity = '0';
+
+        setTimeout(() => {
+          cardEl.remove();
+          if (callback) callback();
+        }, 300);
+      }
+
+      // Azione attivata dai pulsanti fisici (X o Cuore)
+      handleAction(choice) {
+        if (!this.activeCardEl || this.currentIndex >= this.cases.length) return;
+        this.sound.playTap();
+
+        if (choice === 'A') {
+          if (this.badgeNopeEl) this.badgeNopeEl.style.opacity = 1;
+          this.animateFlyOut(this.activeCardEl, 'left', () => this.evaluateAnswer('A'));
+        } else {
+          if (this.badgeLikeEl) this.badgeLikeEl.style.opacity = 1;
+          this.animateFlyOut(this.activeCardEl, 'right', () => this.evaluateAnswer('B'));
+        }
+      }
+
+      /* ========================================================================
+         VALUTAZIONE RISPOSTA & FEEDBACK MODAL
+         ======================================================================== */
+      evaluateAnswer(choice) {
+        const currentCase = this.cases[this.currentIndex];
+        const isCorrect = (choice === currentCase.correctOption);
+
+        if (isCorrect) {
+          this.score++;
+          this.scoreDisplay.textContent = this.score;
+          this.sound.playCorrect();
+        } else {
+          this.sound.playWrong();
+        }
+
+        this.answers.push({
+          id: currentCase.id,
+          case: currentCase,
+          chosen: choice,
+          isCorrect: isCorrect
+        });
+
+        this.updateProgressSegment(this.currentIndex, isCorrect);
+        this.showFeedbackModal(currentCase, choice, isCorrect);
+      }
+
+      showFeedbackModal(currentCase, choice, isCorrect) {
+        const headerBadge = document.getElementById('feedbackHeaderBadge');
+        const iconWrapper = document.getElementById('feedbackIconWrapper');
+        const titleEl = document.getElementById('feedbackTitle');
+        const jokeEl = document.getElementById('feedbackJoke');
+        const errorBox = document.getElementById('errorExplanationBox');
+        const errorText = document.getElementById('errorExplanationText');
+        const pearlEl = document.getElementById('feedbackPearl');
+
+        pearlEl.textContent = currentCase.pearl;
+
+        if (isCorrect) {
+          iconWrapper.textContent = '💚';
+          iconWrapper.className = 'w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-3xl shadow-glow-emerald mb-1 animate-bounce';
+          titleEl.textContent = "IT'S A MATCH! 💚";
+          titleEl.className = 'text-2xl font-black tracking-tight text-emerald-400';
+          jokeEl.textContent = currentCase.matchJoke;
+          jokeEl.className = 'text-xs font-semibold text-emerald-300 italic px-2';
+          errorBox.classList.add('hidden');
+        } else {
+          iconWrapper.textContent = '💔';
+          iconWrapper.className = 'w-16 h-16 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center text-3xl shadow-glow-rose mb-1 animate-pulse';
+          titleEl.textContent = "GHOSTED DALL'EPATOLOGO! 💔";
+          titleEl.className = 'text-2xl font-black tracking-tight text-rose-400';
+          jokeEl.textContent = currentCase.ghostJoke;
+          jokeEl.className = 'text-xs font-semibold text-rose-300 italic px-2';
+          errorBox.classList.remove('hidden');
+          errorText.textContent = currentCase.errorExplanation;
+        }
+
+        // Mostra Modale
+        this.feedbackModal.classList.remove('hidden');
+        setTimeout(() => {
+          this.feedbackModal.classList.remove('opacity-0');
+          this.feedbackContent.classList.remove('scale-95');
+        }, 10);
+
+        lucide.createIcons();
+      }
+
+      closeFeedbackAndAdvance() {
+        this.feedbackModal.classList.add('opacity-0');
+        this.feedbackContent.classList.add('scale-95');
+
+        setTimeout(() => {
+          this.feedbackModal.classList.add('hidden');
+          this.currentIndex++;
+          this.renderStack();
+        }, 200);
+      }
+
+      /* ========================================================================
+         MODALE: CONSIGLIO DEL PRIMARIO
+         ======================================================================== */
+      openHintModal() {
+        if (this.currentIndex >= this.cases.length) return;
+        this.sound.playTap();
+        const currentCase = this.cases[this.currentIndex];
+        document.getElementById('hintText').textContent = currentCase.hint;
+
+        this.hintModal.classList.remove('hidden');
+        setTimeout(() => {
+          this.hintModal.classList.remove('opacity-0');
+          this.hintModal.children[0].classList.remove('scale-95');
+        }, 10);
+      }
+
+      closeHintModal() {
+        this.hintModal.classList.add('opacity-0');
+        this.hintModal.children[0].classList.add('scale-95');
+        setTimeout(() => {
+          this.hintModal.classList.add('hidden');
+        }, 200);
+      }
+
+      /* ========================================================================
+         SCHERMATA FINALE & CORIANDOLI
+         ======================================================================== */
+      showResultsScreen() {
+        const score = this.score;
+        const total = this.cases.length;
+        document.getElementById('finalScoreVal').textContent = score;
+
+        const emojiEl = document.getElementById('resultEmoji');
+        const titleEl = document.getElementById('finalVerdictTitle');
+        const subEl = document.getElementById('finalVerdictSubtitle');
+
+        if (score === 10) {
+          emojiEl.textContent = '👑';
+          titleEl.textContent = "Idonea con Lode: I Professori Piangono di Commozione!";
+          subEl.textContent = "10 su 10! Hai dominato sia i virus che le epatopatie tossiche e metaboliche. Il 22 ottobre sarà una passeggiata trionfale verso il nuovo anno!";
+        } else if (score >= 8) {
+          emojiEl.textContent = '🌟';
+          titleEl.textContent = "Specializzanda d'Acciaio: Promossa a Pieni Voti!";
+          subEl.textContent = "Quasi perfetta! L'epatologo di reparto ti offre il caffè e ti cede volentieri la cartella clinica del caso più complicato.";
+        } else if (score >= 6) {
+          emojiEl.textContent = '☕';
+          titleEl.textContent = "Idonea: Turno Superato, ma Occhio ai Mutanti!";
+          subEl.textContent = "Buona sufficienza clinica. Una rapida ripassata alle perle qui sotto prima del 22 ottobre e nessun professore potrà metterti in difficoltà.";
+        } else {
+          emojiEl.textContent = '📚';
+          titleEl.textContent = "Turno Intenso: Ripasso Tattico Pre-Esame!";
+          subEl.textContent = "La clinica geriatrica è insidiosa! Rileggi con calma il bignami delle perle qui sotto e riprova il mazzo per fissare i concetti chiave.";
+        }
+
+        // Popola la lista delle Perle da Esame
+        const pearlsList = document.getElementById('pearlsSummaryList');
+        pearlsList.innerHTML = '';
+        this.cases.forEach((c) => {
+          const userAns = this.answers.find(a => a.id === c.id);
+          const wasCorrect = userAns ? userAns.isCorrect : false;
+
+          const item = document.createElement('div');
+          item.className = 'p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs space-y-1';
+          item.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white">${c.id}. ${c.patientName} (${c.age}a)</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${wasCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                ${wasCorrect ? 'Corretto 💚' : 'Rivedi 💔'}
+              </span>
+            </div>
+            <div class="text-slate-400 text-[11px] font-medium">Diagnosi corretta: <span class="text-emerald-400 font-bold">${c.correctOption === 'A' ? c.optionA.label : c.optionB.label}</span></div>
+            <div class="text-slate-300 text-[11px] bg-slate-950 p-2 rounded-lg border border-slate-800/80 mt-1 italic">
+              "✨ ${c.pearl}"
+            </div>
+          `;
+          pearlsList.appendChild(item);
+        });
+
+        // Suono fanfara
+        if (score >= 7) {
+          this.sound.playFanfare();
+        } else {
+          this.sound.playCorrect();
+        }
+
+        // Esplosione Coriandoli
+        this.fireConfetti();
+
+        // Mostra Schermata
+        this.resultsScreen.classList.remove('hidden');
+        setTimeout(() => {
+          this.resultsScreen.classList.remove('opacity-0');
+        }, 10);
+
+        lucide.createIcons();
+      }
+
+      fireConfetti() {
+        if (typeof confetti !== 'function') return;
+
+        // Raffica iniziale
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#FE3C72', '#10B981', '#F59E0B', '#3B82F6', '#EC4899']
+        });
+
+        // Cascata laterale dopo 400ms
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#FE3C72', '#F59E0B']
+          });
+          confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#10B981', '#38BDF8']
+          });
+        }, 350);
+      }
+
+      restartGame() {
+        this.sound.playTap();
+        this.resultsScreen.classList.add('opacity-0');
+        setTimeout(() => {
+          this.resultsScreen.classList.add('hidden');
+          this.currentIndex = 0;
+          this.score = 0;
+          this.answers = [];
+          this.scoreDisplay.textContent = '0';
+          this.setupProgressSegments();
+          this.renderStack();
+        }, 250);
+      }
+    }
+
+    // Avvio dell'applicazione al caricamento del DOM
+    window.addEventListener('DOMContentLoaded', () => {
+      window.app = new HepMatchApp();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
