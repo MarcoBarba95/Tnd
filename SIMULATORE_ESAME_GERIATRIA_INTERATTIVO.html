@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Simulatore Interattivo Esame Geriatria - Modulo 01</title>
+<style>
+  :root {
+    --giallo-pastello: #FEE180;
+    --arancio-pesca: #F69962;
+    --rosso-corallo: #F04D54;
+    --verde-tiffany: #4EE0C4;
+    --azzurro-cielo: #54A8FA;
+    --text-primary: #1E293B;
+    --text-muted: #64748B;
+    --bg-page: #F1F5F9;
+    --bg-card: #FFFFFF;
+    --border-card: #E2E8F0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    padding: 16px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .app-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  /* Top App Bar */
+  .app-header {
+    background: linear-gradient(135deg, var(--azzurro-cielo), #1E40AF);
+    color: white;
+    padding: 24px;
+    position: relative;
+  }
+  .badge-app {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(4px);
+    color: white;
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .app-header h1 {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+  .app-header p {
+    font-size: 12.5px;
+    opacity: 0.9;
+  }
+
+  /* Nav Tabs */
+  .nav-tabs {
+    display: flex;
+    background: #FFFFFF;
+    border-bottom: 2px solid var(--border-card);
+    overflow-x: auto;
+    padding: 0 12px;
+  }
+  .nav-tab-btn {
+    padding: 14px 18px;
+    border: none;
+    background: none;
+    font-weight: 700;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-tab-btn:hover { color: var(--azzurro-cielo); }
+  .nav-tab-btn.active {
+    color: #1E40AF;
+    border-bottom-color: var(--azzurro-cielo);
+  }
+
+  /* Content Sections */
+  .tab-pane {
+    display: none;
+    padding: 24px;
+  }
+  .tab-pane.active { display: block; }
+
+  /* 1. LECTIO TRAINER & TIMER */
+  .timer-card {
+    background: #F8FAFC;
+    border: 2px solid var(--azzurro-cielo);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .timer-display {
+    font-size: 44px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: #1E40AF;
+    margin: 8px 0;
+  }
+  .timer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .btn-timer {
+    padding: 8px 18px;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-timer.start { background: var(--verde-tiffany); color: #064E3B; }
+  .btn-timer.pause { background: var(--giallo-pastello); color: #78350F; }
+  .btn-timer.reset { background: #E2E8F0; color: var(--text-primary); }
+
+  .teleprompter-box {
+    background: #FFFFFF;
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 380px;
+    overflow-y: auto;
+    font-size: 13.5px;
+    line-height: 1.7;
+    border-left: 5px solid var(--azzurro-cielo);
+  }
+  .speech-chunk {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+  .speech-chunk:hover { background: #F0F9FF; }
+  .speech-chunk.active-chunk {
+    background: #FEF3C7;
+    border-left: 3px solid var(--arancio-pesca);
+    font-weight: 600;
+  }
+
+  /* 2. 3D FLASHCARDS */
+  .fc-score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8FAFC;
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border-card);
+    margin-bottom: 20px;
+    font-weight: 700;
+    font-size: 12.5px;
+  }
+  .card-3d-wrapper {
+    perspective: 1000px;
+    height: 260px;
+    margin-bottom: 20px;
+  }
+  .card-3d-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+  }
+  .card-3d-inner.flipped {
+    transform: rotateY(180deg);
+  }
+  .card-3d-front, .card-3d-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    border: 2px solid;
+  }
+  .card-3d-front {
+    background: white;
+    border-color: var(--azzurro-cielo);
+  }
+  .card-3d-back {
+    background: #F8FAFC;
+    border-color: var(--verde-tiffany);
+    transform: rotateY(180deg);
+    overflow-y: auto;
+    font-size: 13px;
+    text-align: left;
+    line-height: 1.6;
+  }
+  .card-tag {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .card-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 14px;
+  }
+  .fc-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-fc {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-fc.know { background: var(--verde-tiffany); color: #064E3B; }
+  .btn-fc.dont-know { background: var(--rosso-corallo); color: white; }
+  .btn-fc.nav { background: #E2E8F0; color: var(--text-primary); }
+
+  /* 3. INTERACTIVE FLOWCHART */
+  .accordion-cloud {
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 2px solid;
+    background: white;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  }
+  .accordion-cloud-header {
+    padding: 14px 18px;
+    cursor: pointer;
+    font-weight: 800;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    user-select: none;
+  }
+  .accordion-cloud-content {
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    background: #F8FAFC;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .accordion-cloud.open .accordion-cloud-content {
+    padding: 14px 18px;
+    max-height: 500px;
+    border-top: 1px solid var(--border-card);
+  }
+
+  /* 4. CLINICAL CALCULATORS */
+  .calc-box {
+    background: #F8FAFC;
+    border: 1px solid var(--border-card);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .calc-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1E40AF;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .input-group input, .input-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-card);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    background: white;
+  }
+  .calc-result {
+    background: white;
+    border: 2px solid var(--azzurro-cielo);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+  }
+  .calc-result-val {
+    font-size: 18px;
+    font-weight: 900;
+    color: #1E40AF;
+  }
+  .calc-result-advice {
+    font-size: 12px;
+    margin-top: 6px;
+    color: var(--text-primary);
+  }
+
+  /* Footer */
+  .app-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-card);
+    background: #FAFAFA;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- Header -->
+  <div class="app-header">
+    <span class="badge-app">SCUOLA DI SPECIALIZZAZIONE IN GERIATRIA • MODULO 01</span>
+    <h1>Simulatore Orale & Clinico Interattivo</h1>
+    <p>Lectio Magistralis Trainer (4:30 min) • Flashcard 3D della Commissione • Calcolatori Bedside eGFR/CURB-65</p>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="nav-tab-btn active" onclick="switchTab('tab-lectio')">🎙️ Lectio Magistralis</button>
+    <button class="nav-tab-btn" onclick="switchTab('tab-flashcards')">🃏 Flashcards 3D</button>
+    <button class="nav-tab-btn" onclick="switchTab('tab-flowchart')">☁️ Algoritmo a Nuvolette</button>
+    <button class="nav-tab-btn" onclick="switchTab('tab-calcolatori')">🧮 Calcolatori Bedside</button>
+  </div>
+
+  <!-- TAB 1: LECTIO MAGISTRALIS TRAINER -->
+  <div id="tab-lectio" class="tab-pane active">
+    
+    <div class="timer-card">
+      <div style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Cronometro Ufficiale d'Esame (Target: 4:30 min)</div>
+      <div class="timer-display" id="timerDisplay">04:30</div>
+      <div class="timer-controls">
+        <button class="btn-timer start" onclick="startTimer()">▶ AVVIA SIMULAZIONE</button>
+        <button class="btn-timer pause" onclick="pauseTimer()">⏸ PAUSA</button>
+        <button class="btn-timer reset" onclick="resetTimer()">↺ RESETTA</button>
+      </div>
+    </div>
+
+    <h3 style="font-size: 13.5px; font-weight: 800; color: #1E40AF; margin-bottom: 8px; text-transform: uppercase;">
+      Traccia Discorsiva Accademica (Clicca sui blocchi per evidenziare):
+    </h3>
+    <div class="teleprompter-box" id="teleprompter">
+      
+      <div class="speech-chunk active-chunk" onclick="highlightChunk(this)">
+        <strong>1. DEFINIZIONE & NOSOLOGIA:</strong><br>
+        «La polmonite acquisita in comunità è definita formalmente come un'affezione flogistica acuta del parenchima polmonare distale ai bronchioli terminali, contratta al di fuori delle strutture ospedaliere o manifestatasi entro 48 ore dal ricovero ordinario. Nell'anziano fragile, la polmonite da aspirazione o ab ingestis rappresenta una variante fisiopatologica di rilievo epidemiologico primario, conseguente alla micro o macro-aspirazione di secreto orofaringeo colonizzato.»
+      </div>
+
+      <div class="speech-chunk" onclick="highlightChunk(this)">
+        <strong>2. EZIOLOGIA SISTEMATICA:</strong><br>
+        «Sotto il profilo eziologico riconosciamo patogeni tipici extracellulari, primi fra tutti <em>Streptococcus pneumoniae</em>, <em>Haemophilus influenzae</em> e <em>Staphylococcus aureus</em>; patogeni atipici intracellulari, quali <em>Legionella pneumophila</em>, <em>Mycoplasma pneumoniae</em> e <em>Chlamydophila</em>; e, specificamente nella genesi da aspirazione, una flora polimicrobica dominata da anaerobi obbligati del cavo orale come <em>Peptostreptococcus</em> e <em>Fusobacterium nucleatum</em>, cui si affiancano i virus respiratori, in particolare Influenza, SARS-CoV-2 ed RSV.»
+      </div>
+
+      <div class="speech-chunk" onclick="highlightChunk(this)">
+        <strong>3. EZIOPATOGENESI SENILE & SEMEIOTICA MEDICA:</strong><br>
+        «Dal punto di vista eziopatogenetico, l'immunosenescenza e l'inflammaging attenuano la reattività pirogenica sistemica, mentre la presbifagia e la sarcopenia orofaringea favoriscono le microaspirazioni silenti e la perdita della clearance mucociliare protettiva.<br>
+        All'esame obiettivo, la semeiotica classica evidenzia all'ispezione tachipnea oggettiva; alla palpazione, un incremento del fremito vocale tattile in corrispondenza del consolidamento parenchimale con bronco pervio; alla percussione, un'ottusità plessica circoscritta; e all'auscultazione, murmure sostituito da soffio tubarico e crepitii tele-inspiratori fissi. Nel paziente geriatrico, tuttavia, la clinica è frequentemente atipica: la febbre manca nel 35-40% dei casi, manifestandosi invece con tachipnea isolata con frequenza superiore a 24 atti al minuto, delirium ipoattivo acuto o caduta improvvisa a terra.»
+      </div>
+
+      <div class="speech-chunk" onclick="highlightChunk(this)">
+        <strong>4. WORK-UP DIAGNOSTICO & STRUMENTALE:</strong><br>
+        «Il work-up diagnostico si fonda su indagini ematochimiche volte a valutare gli indici di flogosi, integrando la PCR con la Procalcitonina per discriminare tempestivamente un'infezione batterica da una genesi virale o sterile; l'emogasanalisi arteriosa per calcolare il rapporto PaO2/FiO2 e monitorare lattati ed equilibrio acido-base; e la diagnostica per immagini mediante radiografia del torace ed ecografia polmonare bedside, quest'ultima fondamentale per dimostrare il broncogramma aereo dinamico escludendo l'atelettasia ostruttiva. Il percorso microbiologico prevede, tassativamente prima dell'avvio della terapia, l'esecuzione di due set di emocolture, tampone molecolare respiratorio multiplex ed antigeni urinari per Pneumococco e Legionella.»
+      </div>
+
+      <div class="speech-chunk" onclick="highlightChunk(this)">
+        <strong>5. STRATEGIA TERAPEUTICA & BPCO RIACUTIZZATA:</strong><br>
+        «La strategia terapeutica prevede un approccio empirico ragionato impostato entro le prime tre ore: nel paziente ricoverato in reparto medico, la combinazione d'elezione è Ampicillina/Sulbactam al dosaggio di 3 grammi ogni 8 ore endovena, oppure Ceftriaxone 2 grammi die, associato a Claritromicina 500 milligrammi ogni 12 ore per coprire gli atipici. A 48-72 ore la terapia viene de-escalata sulla base dell'antibiogramma e della MIC, programmando lo switch orale alla stabilità clinica per una durata complessiva rigorosamente limitata a 5-7 giorni, guidata dal calo superiore all'80% della procalcitonina.<br>
+        Nella BPCO riacutizzata, dominata da auto-PEEP e fatica diaframmatica, applico ossigeno Venturi (88-92%), aerosol SABA/SAMA, Prednisone orale a 40 mg/die per esattamente 5 giorni in accordo con il trial REDUCE, ed Amoxicillina/Clavulanato se espettorato purulento. Se persiste acidosi (pH &lt;7.35 e PaCO2 &gt;45 mmHg), avvio tempestivamente la BiPAP con IPAP a 12 ed EPAP a 4 cmH2O.»
+      </div>
+
+      <div class="speech-chunk" onclick="highlightChunk(this)">
+        <strong>6. CONCLUSIONE CON LENTE GERIATRICA & VMD:</strong><br>
+        «Concludo integrando la valutazione multidimensionale geriatrica: calcolo l'eGFR reale con la formula di Cockcroft-Gault per evitare l'accumulo di molecole idrofili, abolisco categoricamente farmaci sedativi e benzodiazepine che deprimerebbero il centro del respiro, imposto alla dimissione il corretto inalatore evitando polveri secche nell'anziano fragile, e attivo la riabilitazione motoria e respiratoria precoce per prevenire la disabilità acquisita.»
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 2: FLASHCARDS 3D -->
+  <div id="tab-flashcards" class="tab-pane">
+    <div class="fc-score-bar">
+      <span>Progresso Flashcard: <span id="fcProgress">1 / 5</span></span>
+      <span>Mastery: <span id="fcScore" style="color: #059669;">0 Sapevo</span> / <span id="fcWrong" style="color: #DC2626;">0 Da Ripassare</span></span>
+    </div>
+
+    <div class="card-3d-wrapper" onclick="flipCard()">
+      <div class="card-3d-inner" id="flashcardInner">
+        <!-- Front -->
+        <div class="card-3d-front">
+          <span class="card-tag" id="fcTag" style="background: var(--arancio-pesca); color: white;">TRABOCCHETTO ESAME</span>
+          <h2 id="fcQuestion" style="font-size: 16px; color: #0F172A; max-width: 600px; margin: 10px 0;">
+            Paziente con PCR 140 mg/L e Procalcitonina 0.08 mcg/L. Qual è la diagnosi fisiopatologica?
+          </h2>
+          <div class="card-hint">🔄 Clicca per girare la carta e vedere la risposta perfetta da 30 e lode</div>
+        </div>
+        <!-- Back -->
+        <div class="card-3d-back">
+          <span class="card-tag" style="background: var(--verde-tiffany); color: #064E3B;">RISPOSTA MAGISTRALE</span>
+          <div id="fcAnswer">
+            La dissociazione orienta verso un'<strong>infezione virale acuta</strong> (Influenza, COVID, RSV) o verso una riacutizzazione flogistica non infettiva. L'interferone-gamma secreto durante la risposta immunitaria antivirale inibisce selettivamente la sintesi della procalcitonina indotta da IL-1beta e TNF-alfa. Eseguire tampone molecolare respiratorio multiplex ed astenersi dalla prescrizione empirica di antibiotici ad ampio spettro se il quadro emodinamico è stabile.
+          </div>
+          <div class="card-hint" style="text-align: right; width: 100%; margin-top: 10px;">🔄 Clicca per tornare alla domanda</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-nav">
+      <button class="btn-fc nav" onclick="prevCard()">◀ Precedente</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-fc dont-know" onclick="markCard(false)">❌ Da Ripassare</button>
+        <button class="btn-fc know" onclick="markCard(true)">✅ Sapevo Perfettamente</button>
+      </div>
+      <button class="btn-fc nav" onclick="nextCard()">Successiva ▶</button>
+    </div>
+  </div>
+
+  <!-- TAB 3: INTERACTIVE FLOWCHART -->
+  <div id="tab-flowchart" class="tab-pane">
+    <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px;">
+      Clicca su ciascun blocco della flowchart per espandere le evidenze cliniche, i criteri decisionali e le molecole raccomandate:
+    </p>
+
+    <div class="accordion-cloud open" style="border-color: var(--azzurro-cielo);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: #0284C7; background: #F0F9FF;">
+        <span>☁️ [1. SOSPETTO CLINICO ATIPICO]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        Tachipnea oggettiva (FR &gt;24 atti/min), delirium ipoattivo a esordio acuto, caduta a terra inspiegabile, ipotermia o peggioramento dei criteri di Anthonisen (dispnea + secrezioni purulente).<br>
+        <em>Allerta Geriatrico:</em> Ricordare che l'assenza di febbre si osserva fino al 40% degli ultraottantenni per deficit di citochine pirogene (*inflammaging*).
+      </div>
+    </div>
+
+    <div class="accordion-cloud" style="border-color: var(--verde-tiffany);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: #0D9488; background: #F0FDF4;">
+        <span>☁️ [2. EMATOCHIMICA MIRATA & EGA ARTERIOSA]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        • <strong>Emocromo:</strong> formula con shift a sinistra (&gt;10% neutrofili immaturi a banda).<br>
+        • <strong>PCT vs PCR:</strong> PCT &gt;0.25 mcg/L = batterica; PCT &lt;0.1 = virale.<br>
+        • <strong>EGA:</strong> $PaO_2/FiO_2$ (&lt;300 = insufficienza respiratoria acuta). Valutazione $PaCO_2$ e $pH$ per discriminare ritentore compensato (pH normale, HCO3- elevati) da acuto scompensato (pH &lt;7.35). Lattati &gt;2 mmol/L.
+      </div>
+    </div>
+
+    <div class="accordion-cloud" style="border-color: var(--giallo-pastello);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: #D97706; background: #FFFBEB;">
+        <span>☁️ [3. DIAGNOSTICA STRUMENTALE & LUS]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        • <strong>Rx Torace 2P:</strong> addensamento parenchimale (falso negativo possibile all'ingresso se disidratato: riespandere e ripetere a 24-48h).<br>
+        • <strong>Ecografia Polmonare (LUS):</strong> consolidamento epatizzato subpleurico con <em>broncogramma aereo dinamico</em> (oscillazione intralesionale sincrona col respiro = polmonite; se statico = atelettasia).<br>
+        • <strong>CURB-65:</strong> Confusione (+1), Urea &gt;19 mg/dL (+1), FR &ge;30 (+1), BP &lt;90/60 (+1), Età &ge;65 (+1).
+      </div>
+    </div>
+
+    <div class="accordion-cloud" style="border-color: var(--arancio-pesca);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: #EA580C; background: #FFF7ED;">
+        <span>☁️ [4. MICROBIOLOGIA RIGOROSA PRE-TERAPIA]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        1. <strong>2 set di Emocolture</strong> da accessi venosi distinti (aerobi + anaerobi).<br>
+        2. <strong>Tampone molecolare respiratorio multiplex:</strong> SARS-CoV-2, Influenza A/B, RSV.<br>
+        3. <strong>Antigeni urinari:</strong> <em>S. pneumoniae</em> e <em>L. pneumophila SG1</em> (rapidi, non inficiati da antibiotici).<br>
+        4. Esame colturale dell'espettorato o aspirato endotracheale per antibiogramma e determinazione MIC.
+      </div>
+    </div>
+
+    <div class="accordion-cloud" style="border-color: var(--azzurro-cielo);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: #2563EB; background: #EFF6FF;">
+        <span>☁️ [5. TERAPIA EMPIRICA TEMPESTIVA DI REPARTO]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        • <strong>CAP Medica Standard:</strong> Ampicillina/Sulbactam 3 g q8h IV (oppure Ceftriaxone 2 g die) + Claritromicina 500 mg q12h IV/os.<br>
+        • <strong>Sospetto Ab Ingestis:</strong> Ampicillina/Sulbactam 3 g q8h o Piperacillina/Tazobactam 4.5 g q8h IV.<br>
+        • <strong>AECOPD:</strong> Prednisone 40 mg/die os x 5 giorni (Trial REDUCE) + Amoxicillina/Clavulanato 875/125 mg q8h x 5 gg + aerosol SABA/SAMA.
+      </div>
+    </div>
+
+    <div class="accordion-cloud" style="border-color: var(--verde-tiffany);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: #16A34A; background: #F0FDF4;">
+        <span>☁️ [6. TERAPIA MIRATA, DE-ESCALATION & NIV]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        • De-escalation a molecola a spettro mirato non appena perviene l'antibiogramma.<br>
+        • Switch a via orale alla stabilità clinica (apiressia da 24-48h).<br>
+        • Sospensione a 5-7 giorni complessivi se PCT calata &gt;80% dal picco o &lt;0.25 mcg/L.<br>
+        • <strong>Se BPCO con acidosi (pH &lt;7.35 e PaCO2 &gt;45 mmHg):</strong> BiPAP precoce in modalità S/T (IPAP 10-12, EPAP 4-5 cmH2O) con controllo EGA a 1-2 ore.
+      </div>
+    </div>
+
+    <div class="accordion-cloud" style="border-color: var(--rosso-corallo);">
+      <div class="accordion-cloud-header" onclick="toggleCloud(this)" style="color: var(--rosso-corallo); background: #FEF2F2;">
+        <span>☁️ [7. LENTE GERIATRICA & DIMISSIONE PROTETTA]</span>
+        <span>▼</span>
+      </div>
+      <div class="accordion-cloud-content">
+        • Ricalcolo posologico su eGFR reale (Cockcroft-Gault con peso stimato).<br>
+        • Screening della deglutizione (Bedside Water Swallow Test) per prevenire recidive da ab ingestis.<br>
+        • De-prescribing assoluto di benzodiazepine e sedativi respiratori.<br>
+        • Prescrizione inalatore idoneo alla dimissione: solo MDI con distanziatore o Respimat (evitare polveri DPI se anziano fragile).
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 4: CLINICAL CALCULATORS -->
+  <div id="tab-calcolatori" class="tab-pane">
+    
+    <!-- Calc 1: Cockcroft-Gault -->
+    <div class="calc-box">
+      <div class="calc-title">🧮 Calcolatore Clearance Creatinina (Cockcroft-Gault) & Adeguamento Antibiotici</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Età (Anni)</label>
+          <input type="number" id="cgAge" value="82" min="18" max="110" oninput="runCockcroft()">
+        </div>
+        <div class="input-group">
+          <label>Sesso</label>
+          <select id="cgSex" onchange="runCockcroft()">
+            <option value="male">Maschio</option>
+            <option value="female" selected>Femmina</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Peso Corporeo (kg)</label>
+          <input type="number" id="cgWeight" value="55" min="30" max="150" oninput="runCockcroft()">
+        </div>
+        <div class="input-group">
+          <label>Creatinina (mg/dL)</label>
+          <input type="number" id="cgCreat" value="1.0" step="0.1" min="0.3" max="10" oninput="runCockcroft()">
+        </div>
+      </div>
+      <div class="calc-result">
+        <div>Clearance Creatinina Stimata: <span class="calc-result-val" id="cgResult">29.4 mL/min</span></div>
+        <div class="calc-result-advice" id="cgAdvice">
+          ⚠️ <strong>Adeguamento Posologico Necessario:</strong><br>
+          • <strong>Ampicillina/Sulbactam:</strong> 1.5 g ogni 12 ore (anziché 3 g q8h).<br>
+          • <strong>Claritromicina:</strong> Dimezzare a 250 mg ogni 12h o 500 mg ogni 24h.<br>
+          • <strong>Piperacillina/Tazobactam:</strong> 2.25 g ogni 8 ore.<br>
+          • <strong>Ceftriaxone:</strong> 2 g die invariato (eliminazione biliare 40%).
+        </div>
+      </div>
+    </div>
+
+    <!-- Calc 2: CURB-65 -->
+    <div class="calc-box">
+      <div class="calc-title">📊 Score di Gravità CURB-65 (CAP Stratification)</div>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+          <input type="checkbox" id="curbC" onchange="runCurb()"> <strong>C</strong> - Confusione mentale nuova (AMTS &le; 8 o disorientamento)
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+          <input type="checkbox" id="curbU" checked onchange="runCurb()"> <strong>U</strong> - Urea &gt; 19 mg/dL (BUN &gt; 7 mmol/L)
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+          <input type="checkbox" id="curbR" checked onchange="runCurb()"> <strong>R</strong> - Frequenza Respiratoria &ge; 30 atti/min
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+          <input type="checkbox" id="curbB" onchange="runCurb()"> <strong>B</strong> - Blood Pressure (PAS &lt; 90 o PAD &le; 60 mmHg)
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+          <input type="checkbox" id="curb65" checked onchange="runCurb()"> <strong>65</strong> - Età &ge; 65 Anni (automatico in Geriatria!)
+        </label>
+      </div>
+      <div class="calc-result">
+        <div>Punteggio CURB-65: <span class="calc-result-val" id="curbResult">3 Punti</span></div>
+        <div class="calc-result-advice" id="curbAdvice">
+          🚨 <strong>CAP Grave (Score &ge; 3):</strong> Mortalità stimata 15-20%. Indicato ricovero ospedaliero urgente con valutazione per monitoraggio sub-intensivo/intensivo.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- App Footer -->
+  <div class="app-footer">
+    Materiale didattico riservato per Medico Specializzando • Scuola di Specializzazione in Geriatria • Progettato per studio accelerato su Smartphone, Tablet e Computer
+  </div>
+
+</div>
+
+<script>
+  // Tab Switching
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // 1. Timer Simulation
+  let timerInterval = null;
+  let remainingSeconds = 270; // 4 min 30 sec
+
+  function updateTimerDisplay() {
+    const min = Math.floor(remainingSeconds / 60);
+    const sec = remainingSeconds % 60;
+    document.getElementById('timerDisplay').innerText = 
+      `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+
+  function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+      if (remainingSeconds > 0) {
+        remainingSeconds--;
+        updateTimerDisplay();
+      } else {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        alert("Tempo scaduto! (4:30 min) Ottima prova oratoria.");
+      }
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    remainingSeconds = 270;
+    updateTimerDisplay();
+  }
+
+  function highlightChunk(element) {
+    document.querySelectorAll('.speech-chunk').forEach(el => el.classList.remove('active-chunk'));
+    element.classList.add('active-chunk');
+  }
+
+  // 2. Flashcards
+  const flashcardsData = [
+    {
+      tag: "TRABOCCHETTO 1 • FISIOPATOLOGIA",
+      q: "Paziente con PCR 140 mg/L e Procalcitonina 0.08 mcg/L. Qual è la diagnosi fisiopatologica?",
+      a: "La dissociazione orienta verso un'<strong>infezione virale acuta</strong> (Influenza, COVID, RSV) o verso una riacutizzazione flogistica non infettiva. L'interferone-gamma secreto durante la risposta immunitaria antivirale inibisce selettivamente la sintesi della procalcitonina indotta da IL-1beta e TNF-alfa. Eseguire tampone molecolare respiratorio multiplex ed astenersi dalla prescrizione empirica di antibiotici ad ampio spettro se il quadro emodinamico è stabile."
+    },
+    {
+      tag: "TRABOCCHETTO 2 • EMERGENZA BPCO",
+      q: "Paziente con BPCO nota arriva con maschera reservoir a 12 L/min, SpO2 99%, soporoso e poco reattivo. Cosa sta accadendo?",
+      a: "Si tratta di <strong>coma ipercapnico da intossicazione da ossigeno ad alti flussi</strong>. L'eccesso di ossigeno ha abolito la vasocostrizione polmonare ipossica protettiva (peggiorando lo spazio morto alveolare), ha soppresso il drive chemocettoriale respiratorio periferico e ha innescato l'effetto Haldane. Rimuovere immediatamente la maschera ad alti flussi, posizionare maschera di Venturi al 24-28% con target SpO2 88-92%, eseguire EGA immediata e avviare ventilazione non invasiva BiPAP per lavare la CO2."
+    },
+    {
+      tag: "TRABOCCHETTO 3 • TERAPIA INALATORIA",
+      q: "In quale paziente con BPCO si prescrive la tripla terapia con corticosteroide inalatorio (ICS) alla dimissione?",
+      a: "Secondo le linee guida GOLD, solo nei soggetti con storia di riacutizzazioni frequenti (&ge;2 moderate o &ge;1 severa con ospedalizzazione nell'anno precedente) <strong>E</strong> conta di eosinofili ematici <strong>&ge;300 cellule/microL</strong> (o &ge;100 con fenotipo altamente instabile). Se gli eosinofili sono &lt;100 cell/microL, l'ICS non apporta benefici sulle riacutizzazioni ed incrementa marcatamente l'incidenza di polmonite severa nell'anziano, indicando la doppia broncodilatazione LAMA + LABA."
+    },
+    {
+      tag: "TRABOCCHETTO 4 • ECOGRAFIA POLMONARE",
+      q: "Come si differenzia all'ecografia polmonare (LUS) il consolidamento polmonitico dall'atelettasia?",
+      a: "La polmonite consolidativa presenta il <strong>broncogramma aereo dinamico</strong> (gli spot iperecogeni intralesionali oscillano sincronicamente con gli atti respiratori, testimoniando pervietà bronchiale ed essudato alveolare). L'atelettasia ostruttiva presenta invece <strong>broncogramma aereo statico</strong> (l'aria intrappolata oltre l'occlusione non si muove col ciclo ventilatorio), associato a perdita di volume ed attrazione delle strutture pleuro-mediastiniche adiacenti."
+    },
+    {
+      tag: "TRABOCCHETTO 5 • TRIAL CLINICI CARDINE",
+      q: "Perché il trial REDUCE ha modificato la durata della terapia steroidea sistemica nella riacutizzazione di BPCO?",
+      a: "Il trial randomizzato REDUCE ha dimostrato la non-inferiorità di un regime breve di 5 giorni con Prednisone per os a 40 mg/die rispetto al regime tradizionale di 14 giorni in termini di recupero funzionale del FEV1, tempo alla successiva riacutizzazione e mortalità a 6 mesi. Il ciclo breve riduce drasticamente l'esposizione steroidea, azzerando le complicanze tipiche dell'anziano fragile: discontrollo glicemico severo, miopatia acuta dei muscoli respiratori e delirium iatrogeno."
+    }
+  ];
+
+  let curCardIdx = 0;
+  let knowCount = 0;
+  let wrongCount = 0;
+
+  function updateCard() {
+    const card = flashcardsData[curCardIdx];
+    document.getElementById('flashcardInner').classList.remove('flipped');
+    document.getElementById('fcTag').innerText = card.tag;
+    document.getElementById('fcQuestion').innerText = card.q;
+    document.getElementById('fcAnswer').innerHTML = card.a;
+    document.getElementById('fcProgress').innerText = `${curCardIdx + 1} / ${flashcardsData.length}`;
+  }
+
+  function flipCard() {
+    document.getElementById('flashcardInner').classList.toggle('flipped');
+  }
+
+  function nextCard() {
+    curCardIdx = (curCardIdx + 1) % flashcardsData.length;
+    updateCard();
+  }
+
+  function prevCard() {
+    curCardIdx = (curCardIdx - 1 + flashcardsData.length) % flashcardsData.length;
+    updateCard();
+  }
+
+  function markCard(known) {
+    if (known) knowCount++;
+    else wrongCount++;
+    document.getElementById('fcScore').innerText = `${knowCount} Sapevo`;
+    document.getElementById('fcWrong').innerText = `${wrongCount} Da Ripassare`;
+    nextCard();
+  }
+
+  // 3. Flowchart Accordion
+  function toggleCloud(header) {
+    const cloud = header.parentElement;
+    cloud.classList.toggle('open');
+  }
+
+  // 4. Calcolatore Cockcroft-Gault
+  function runCockcroft() {
+    const age = parseFloat(document.getElementById('cgAge').value) || 80;
+    const sex = document.getElementById('cgSex').value;
+    const weight = parseFloat(document.getElementById('cgWeight').value) || 60;
+    const creat = parseFloat(document.getElementById('cgCreat').value) || 1.0;
+
+    let crcl = ((140 - age) * weight) / (72 * creat);
+    if (sex === 'female') crcl *= 0.85;
+    crcl = Math.round(crcl * 10) / 10;
+
+    document.getElementById('cgResult').innerText = `${crcl} mL/min`;
+
+    let advice = "";
+    if (crcl >= 50) {
+      advice = "✅ Funzione Renale Conservata / Lievemente Ridotta: Nessun adeguamento richiesto per beta-lattamici standard. Monitorare idratazione.";
+    } else if (crcl >= 30) {
+      advice = "⚠️ Moderata Insufficienza Renale (eGFR 30-49):<br>• Ampicillina/Sulbactam: 3 g ogni 12h (invece di q8h).<br>• Levofloxacina: ridurre a 250-500 mg q24h.<br>• Piperacillina/Tazobactam: 3.375 g ogni 6 ore.<br>• Ceftriaxone: 2 g die invariato.";
+    } else if (crcl >= 15) {
+      advice = "🚨 Severa Insufficienza Renale (eGFR 15-29):<br>• Ampicillina/Sulbactam: 1.5 g ogni 12 ore.<br>• Claritromicina: dimezzare a 250 mg q12h o 500 mg q24h.<br>• Piperacillina/Tazobactam: 2.25 g ogni 8 ore.<br>• Evitare aminoglicosidi ed ottimizzare farmaci epatobiliari.";
+    } else {
+      advice = "🛑 Insufficienza Renale Terminale (eGFR <15): Adeguamento massimo per dialisi/clearance residua. Ampicillina/Sulbactam 1.5 g q24h.";
+    }
+    document.getElementById('cgAdvice').innerHTML = advice;
+  }
+
+  // 5. Calcolatore CURB-65
+  function runCurb() {
+    let score = 0;
+    if (document.getElementById('curbC').checked) score++;
+    if (document.getElementById('curbU').checked) score++;
+    if (document.getElementById('curbR').checked) score++;
+    if (document.getElementById('curbB').checked) score++;
+    if (document.getElementById('curb65').checked) score++;
+
+    document.getElementById('curbResult').innerText = `${score} Punti`;
+
+    let advice = "";
+    if (score <= 1) {
+      advice = "🟢 <strong>Basso Rischio:</strong> Mortalità <1.5%. Possibile gestione domiciliare con supporto o ricovero breve osservazionale.";
+    } else if (score === 2) {
+      advice = "🟡 <strong>Rischio Moderato:</strong> Mortalità ~9%. Indicato ricovero in reparto medico ordinario con monitoraggio parametri vitali.";
+    } else {
+      advice = `🚨 <strong>CAP Grave (Score ${score}):</strong> Mortalità 15-22%. Indicato ricovero ospedaliero urgente con valutazione per monitoraggio sub-intensivo o terapia intensiva.`;
+    }
+    document.getElementById('curbAdvice').innerHTML = advice;
+  }
+
+  // Initialize
+  runCockcroft();
+  runCurb();
+</script>
+
+</body>
+</html>
